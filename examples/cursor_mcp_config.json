@@ -1,0 +1,11 @@
+{
+  "_comment": "Drop this into ~/.cursor/mcp.json. Restart Cursor after saving.",
+  "mcpServers": {
+    "lexicon": {
+      "command": "lexicon-mcp",
+      "env": {
+        "LEXICON_DATABASE_URL": "postgresql://lexicon:lexicon@localhost:5433/lexicon"
+      }
+    }
+  }
+}
