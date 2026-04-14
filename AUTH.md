@@ -62,7 +62,7 @@ Three roles. Additive: `admin > curator > reader`.
 
 - Every authenticated user is at minimum a `reader`
 - Promoting to `curator` happens in the Web UI admin panel; records an audit event
-- `admin` is a bootstrap role: the first user to log in becomes admin; subsequent admins are promoted
+- `admin` is a bootstrap role. **The first user to complete SSO becomes admin by default — this is a real privilege-escalation footgun if left unguarded.** On first deploy, restrict your IdP's lexicon app assignment to one named platform engineer (Okta: "Assignments" tab with a single user; Entra: "Users and groups" limited to one; Clerk: invitation-only mode) so a race condition, phishing, or misconfigured SSO cannot hand admin to the wrong identity. Once the bootstrap admin has logged in and verified their role, open the IdP assignment broader. Subsequent admins are promoted via the Web UI admin panel.
 - **Optional scope-level RBAC (v2):** curators scoped to a subset of primitive types or a tag prefix. Not in v1.
 
 ## Threat model
@@ -95,6 +95,8 @@ Three roles. Additive: `admin > curator > reader`.
 - Postgres: never publicly reachable. Allowlist from MCP server, REST API, and ingestion workers only.
 
 ## Onboarding flow
+
+> **⚠ Before you expose `/onboard` to the company:** the first user to complete SSO becomes the bootstrap admin (see §RBAC above). Restrict your IdP's lexicon app assignment to a single named platform engineer until that engineer has logged in, verified their admin role, and promoted any co-admins. Only then open the assignment broader. Skipping this step is the single most common privilege-escalation mistake in a lexicon rollout.
 
 1. New employee joins the company, gets SSO access
 2. They navigate to `lexicon.company.com`, sign in via SSO

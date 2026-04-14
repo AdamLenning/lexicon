@@ -188,11 +188,13 @@ Staleness is a signal, not a gate. Don't over-rotate on this — users prefer a 
 
 lexicon is **not certified** — it's a specification. What the spec enables:
 
-- **SOC 2 Type II alignment:** audit log, RBAC, access reviews, change management are all hooks; a company implementing this spec has the necessary primitives to pursue SOC 2
-- **GDPR readiness:** PII redaction in audit args, right-to-erasure handled by user deactivation + attribution anonymization, data retention policy expressible per-source
-- **HIPAA hooks (if needed):** audit log retention ≥6 years, BAA-covered hosting (AWS/GCP/Azure tiers), encryption at rest (provider default) + in transit (TLS)
+- **SOC 2 Type II alignment:** audit log, RBAC, access reviews, change management are all hooks
+- **GDPR readiness:** PII redaction in audit args, right-to-erasure via user deactivation + attribution anonymization, data retention per-source
+- **HIPAA hooks:** audit log retention ≥6 years, BAA-covered hosting options, encryption at rest + in transit
 
 A company pursuing certification implements this spec in a way that satisfies its auditor. The spec does not include the auditor.
+
+**For concrete per-framework implementation patterns** — including the BAA-covered service matrix, the HIPAA five-layer PHI-avoidance pattern (policy → source allowlist → Comprehend Medical pre-filter → LLM classifier hardening → runtime redaction), SOC 2 common stumbling blocks, and GDPR right-to-erasure mechanics — see [`COMPLIANCE.md`](./COMPLIANCE.md).
 
 ## Anti-patterns
 

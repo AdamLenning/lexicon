@@ -16,6 +16,18 @@ This doc presents the tradeoffs honestly, names a default, and gives the agent a
 - SQLite (even with sqlite-vec) — single-writer/local, can't be shared across a company
 - Pinecone / Weaviate alone — vector DB alone gives you no governance story for the metadata
 
+## Quick quality comparison (for LLM retrieval at 10K–50K entries)
+
+| Engine | Lexical fuzzy | Semantic (vector) | Hybrid merge | LLM retrieval quality | Governance story |
+|---|---|---|---|---|---|
+| Postgres + pgvector | Good (FTS + `pg_trgm`) | Excellent | Manual RRF (~20 lines SQL) | ~95% of optimal | Strong — ACID, real joins |
+| Mongo Atlas (+ Search + Vector Search) | Excellent (Lucene) | Excellent | Native `$rankFusion` | ~95% of optimal | Weaker — app-layer sagas for multi-doc |
+| Elasticsearch (+ k-NN) | Best (fuzzy, synonyms, stemming, learning-to-rank) | Excellent | Native hybrid | ~95% of optimal | Weak — heavy ops, non-ACID |
+| SQLite + sqlite-vec | Basic | Excellent | Manual | ~90% of optimal | N/A — single-writer, not a service |
+| Plain Mongo (no Atlas Search) | Weak (regex only) | Requires separate vector DB | Multi-system | ~70% of optimal | Weak |
+
+**Upshot:** at company-scale (small), every viable hybrid-capable option lands within 5% of optimal LLM retrieval quality. Embeddings and LLM-forgiveness dominate; lexical-engine sophistication is near-invisible to an LLM consumer. **Pick based on governance, portability, ops fit, and what your team already runs — not search quality.** The section below explains why that leads to Postgres + pgvector as the default.
+
 ## The scale assumption (critical)
 
 A typical company Context Store tops out around **10K–50K entries** total:

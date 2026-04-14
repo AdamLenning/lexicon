@@ -1,6 +1,6 @@
 ---
 name: setup-lexicon
-description: Stand up a production Context Store (lexicon) for a company. Use when the user says "set up lexicon," "implement the context store from this repo," "deploy lexicon for my company," or asks for help provisioning the Context Store described in this repo. Orchestrates storage selection, schema deployment, MCP server + REST API deployment, Web UI, auth wiring, and initial ingestion. References the specialist docs in this repo (ARCHITECTURE.md, PRIMITIVES.md, STORAGE.md, MCP_SPEC.md, DEPLOYMENT.md, AUTH.md, CONTRIBUTION.md, INGESTION.md, GOVERNANCE.md, OPERATIONS.md) as needed.
+description: Stand up a production Context Store (lexicon) for a company. Use when the user says "set up lexicon," "implement the context store from this repo," "deploy lexicon for my company," or asks for help provisioning the Context Store described in this repo. Orchestrates storage selection, schema deployment, MCP server + REST API deployment, Web UI, auth wiring, and initial ingestion. References the specialist docs in this repo (ARCHITECTURE.md, PRIMITIVES.md, STORAGE.md, MCP_SPEC.md, DEPLOYMENT.md, AUTH.md, CONTRIBUTION.md, INGESTION.md, GOVERNANCE.md, COMPLIANCE.md, OPERATIONS.md) as needed.
 ---
 
 # Setting up lexicon — end-to-end
@@ -28,6 +28,8 @@ Ask (and wait for answers before moving on):
 3. **Auth:** "What's your current SSO / identity provider? Okta, Entra/Azure AD, Google Workspace, Clerk, Auth0, Descope, custom OIDC, something else?"
 4. **Scale:** "Roughly how many employees will use this? How many agent queries per day would you guess?" (Most answers here mean "small enough to not matter" — confirm this.)
 5. **Compliance:** "Any compliance framework in play? SOC 2, HIPAA, GDPR residency constraints?"
+
+If the user names a framework, **read [`COMPLIANCE.md`](../../COMPLIANCE.md)** before proposing an architecture — the framework-specific pattern (especially HIPAA's embedding-provider constraint and five-layer PHI-avoidance) changes storage, compute, identity, embedding, and ingestion choices in ways the default recipes don't cover. Do not try to re-derive these patterns from first principles; the doc exists for exactly this moment.
 
 Report back a summary of what you heard before making recommendations. If the user is unsure, assume: Vercel-centric, no existing DB, Clerk for auth, <500 employees, no compliance obligation. Flag that assumption explicitly.
 

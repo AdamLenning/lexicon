@@ -39,6 +39,7 @@ A human engineer can also read these docs top-to-bottom and implement by hand. T
 | [`CONTRIBUTION.md`](./CONTRIBUTION.md) | Five contribution surfaces: Web UI, agent-assisted MCP writes, Slack/Teams bot, REST, scrapers |
 | [`INGESTION.md`](./INGESTION.md) | LLM-driven bootstrap; adapters for file-glob, dbt, Notion, Confluence, Slack, Salesforce |
 | [`GOVERNANCE.md`](./GOVERNANCE.md) | Audit log, approval workflow, versioning, RBAC, compliance posture |
+| [`COMPLIANCE.md`](./COMPLIANCE.md) | Per-framework implementation patterns: HIPAA, SOC 2 Type II, GDPR |
 | [`OPERATIONS.md`](./OPERATIONS.md) | Backups, migrations, observability, staleness TTLs, cost monitoring, incident playbook |
 | [`.claude/skills/setup-lexicon.md`](./.claude/skills/setup-lexicon.md) | The orchestration skill that drives the agent's end-to-end install |
 
