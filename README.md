@@ -23,28 +23,32 @@ Six primitive types are stored (full specs in [`PRIMITIVES.md`](./PRIMITIVES.md)
 
 ## Where it fits in the modern AI stack
 
-Context Stores are an emerging layer in agentic AI infrastructure. They sit between AI clients and everything else the agent might touch:
+Context Stores are an emerging layer in agentic AI infrastructure. They serve as the **grounding source that agents consult before anything else**. The agent makes two independent calls: first to the Context Store (*"what's our definition of active customer? what canonical query computes MRR? what's the guardrail on this warehouse?"*), then to the actual downstream tool using that grounding to shape the call. **The Context Store describes; the agent executes.** It never proxies or calls downstream tools itself.
 
 ```
-    ┌──────────────────────────────────────────────────────┐
-    │  AI clients — Claude Desktop, Cursor, Windsurf,      │
-    │  Continue, internal agents, scheduled jobs           │
-    └───────────────────────┬──────────────────────────────┘
-                            │ MCP
-                            ▼
-    ┌──────────────────────────────────────────────────────┐
-    │  Context Store — lexicon                             │
-    │  (grounding: terminology, tools, canonical queries,  │  ← agents query here FIRST
-    │   patterns, guardrails, decisions)                   │
-    └───────────────────────┬──────────────────────────────┘
-                            │ MCP / SQL / REST (executed by the agent)
-                            ▼
-    ┌────────────┬──────────────┬──────────────┬───────────┐
-    │ Warehouses │  SaaS APIs   │  Vector /    │ Semantic  │
-    │ Snowflake, │  Salesforce, │  RAG stores  │ layers    │
-    │ BigQuery,  │  Stripe,     │  Pinecone,   │ dbt SL,   │
-    │ Redshift   │  HubSpot     │  Weaviate    │ Cube      │
-    └────────────┴──────────────┴──────────────┴───────────┘
+                 ┌────────────────────────────────┐
+                 │  AI client (the agent)         │
+                 │  Claude Desktop, Cursor,       │
+                 │  Windsurf, internal jobs       │
+                 └──┬──────────────────────────┬──┘
+                    │                          │
+        1. MCP call for                        2. SQL / REST / MCP
+           grounding                              call, shaped by (1),
+                    │                             to retrieve data
+                    ▼                          ▼
+   ┌──────────────────────────┐   ┌──────────────────────────────┐
+   │  Context Store           │   │  Data layer                  │
+   │  (lexicon)               │   │  Warehouses · SaaS APIs ·    │
+   │                          │   │  Vector/RAG · Semantic       │
+   │  returns: tool names,    │   │  layers                      │
+   │  canonical queries,      │╌╌▶│                              │
+   │  guardrails, glossary,   │   │  Snowflake, Salesforce,      │
+   │  patterns, decisions     │   │  Pinecone, dbt SL, ...       │
+   └──────────────────────────┘   └──────────────────────────────┘
+                        informs the shape of the
+                        agent's downstream call —
+                        no runtime connection between
+                        Context Store and data layer
 ```
 
 ### How Context Stores differ from adjacent categories
