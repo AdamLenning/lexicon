@@ -1,121 +1,51 @@
-# lexicon
+# lexicon — Context Store spec
 
-> **A Context Store for AI agents.** Dynamically retrieves the information your agent needs to construct its context — *before* it queries your data tools.
+> A specification for a company-wide **Context Store** — the layer every AI agent in your organization queries before it queries anything else.
 
-Feature store is to ML what context store is to agents. `lexicon` stores your team's canonical queries, tool registry, terminology, guardrails, and decision log, and serves them to any MCP-compatible agent so the agent can ground itself in *your* organization before it acts.
+Feature store is to ML what context store is to agents. `lexicon` stores the terminology, tool registry, canonical queries, guardrails, and decision log your team already uses informally, and serves them to every MCP-capable AI client in the company so that agents ground themselves in *your* organization before they act.
 
----
+## What this repo is
 
-## The easiest install: let your agent do it
+**A set of markdown documents that teach an AI coding agent how to stand up a production Context Store for a company.** No application code. No framework. No opinions baked into a runtime. The docs describe schemas, APIs, deployment recipes, governance, and ingestion patterns — the agent generates the code appropriate to the reader's stack.
 
-Clone this repo, open Claude Code (or Cursor, Windsurf, any MCP-capable coding agent) in it, and say:
+## What this repo is not
 
-> *"Implement the context store from this repo."*
+- Not a library or framework to `pip install`
+- Not a per-repo or per-machine tool
+- Not a hobby project you clone and run locally
 
-The agent reads `.claude/skills/install-lexicon.md`, spins up a dedicated Postgres via `docker compose`, runs the migrations, wires the MCP client config, and hands you a working agent query. Empty DB, ready to curate.
+The Context Store is a **centralized company service**, deployed once by IT/platform engineering. Every LLM client in the organization (Claude Desktop, Cursor, internal agents, scheduled jobs) connects to the same MCP endpoint. Every user — technical or not — contributes through surfaces that don't require git skills.
 
-No clone required either — if your agent can read URLs, tell it:
+## How to use this repo
 
-> *"Implement the context store from https://github.com/AdamLenning/lexicon"*
+Point Claude Code (or Cursor, Windsurf, any MCP-capable coding agent) at this repo and say:
 
----
+> *"Stand up lexicon for my company."*
 
-## Or install it yourself
+The agent reads `.claude/skills/setup-lexicon.md`, walks you through provisioning decisions (which cloud, which DB, which SSO), references the specialist docs below as needed, and hands you a working service plus a config blob IT can push to every LLM client in the company.
 
-```bash
-git clone https://github.com/AdamLenning/lexicon && cd lexicon
-docker compose up -d
-uvx lexicon-ai bootstrap --agent
-```
+A human engineer can also read these docs top-to-bottom and implement by hand. They're written agent-first but humans are invited.
 
-`bootstrap --agent` detects your MCP client, writes the config, applies migrations, and prints your first query to try.
+## Navigation
 
----
-
-## Bring your own Postgres
-
-Most users should skip this — the built-in docker-compose stack is small (~50 MB idle) and avoids schema/permission tangles.
-
-If you want consolidation with existing infra:
-
-```bash
-pip install lexicon-ai
-export LEXICON_DATABASE_URL=postgres://user:pass@host:5432/lexicon  # requires pgvector
-lexicon init
-lexicon serve
-```
-
----
-
-## What's stored
-
-| Primitive | What it is | Example |
-|---|---|---|
-| Tool registry | Known data sources and what they contain | `salesforce`, `snowflake.analytics`, `stripe-api` |
-| Glossary | Your team's terminology | "active customer" = logged in within 30 days AND paying |
-| Canonical queries | Vetted SQL/API templates with parameters | `mrr_by_month(start, end)` |
-| Query patterns | Cross-source recipes | "pipeline-to-revenue joins SFDC opportunities to Stripe charges via …" |
-| Guardrails | Rules the agent must respect | "never query prod replica between 9–11 AM PT" |
-| Decision log | Why past analytical calls were made | "We count trials in MRR starting 2025-Q2 because …" |
-
----
-
-## MCP tools exposed
-
-| Tool | Purpose |
-|---|---|
-| `lexicon.search(query, types=[...])` | Hybrid semantic + lexical search across all primitives |
-| `lexicon.get_tool(name)` | Full tool registry entry |
-| `lexicon.get_canonical_query(name, params)` | Query template + execution hints |
-| `lexicon.define(term)` | Glossary lookup |
-| `lexicon.list_guardrails(scope)` | Guardrails matching a scope (tool, dataset, time) |
-
----
-
-## Architecture
-
-```
- ┌──────────────────┐   MCP (stdio/SSE)   ┌─────────────────────────┐
- │  Claude / Cursor │ ──────────────────► │  lexicon MCP server     │
- │  Windsurf / …    │                     │  (src/lexicon/api)      │
- └──────────────────┘                     └────────────┬────────────┘
-                                                       │
-                                          hybrid search │ FastAPI REST
-                                          (pgvector +   │ (admin curation)
-                                           Postgres FTS)│
-                                                       ▼
-                                        ┌──────────────────────────┐
-                                        │  Postgres + pgvector     │
-                                        │  (dedicated, port 5433)  │
-                                        └──────────────────────────┘
-                                                       ▲
-                                          ingestion    │
-                                          ┌────────────┴────────────┐
-                                          │  Bootstrap skill (LLM)  │
-                                          │  file-glob, dbt,        │
-                                          │  Notion, Confluence     │
-                                          └─────────────────────────┘
-```
-
----
-
-## Why this exists
-
-Every major data platform shipped an MCP server in 2025–2026 — dbt, Omni, Looker, BigQuery, Snowflake Cortex. They are all **single-source semantic layers**. None of them answer the questions an agent actually has when it wakes up:
-
-- Which tool has this data?
-- What does "active customer" mean at *this* company?
-- Is there a canonical query for this?
-- Am I allowed to run this right now?
-
-`lexicon` is the layer that answers those questions. Read [`DESIGN.md`](./DESIGN.md) for the full rationale, competitive landscape, and roadmap.
-
----
+| File | What it covers |
+|------|----------------|
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Components, data flow, centralized-service principle |
+| [`PRIMITIVES.md`](./PRIMITIVES.md) | The six stored primitives: tool, glossary, canonical query, pattern, guardrail, decision |
+| [`STORAGE.md`](./STORAGE.md) | Tradeoff analysis: Postgres+pgvector (default), Mongo Atlas, Elastic, what we rejected and why |
+| [`MCP_SPEC.md`](./MCP_SPEC.md) | MCP tool surface (read + write) with JSON Schemas and error contracts |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Reference recipes: Supabase+Fly, Neon+Railway, RDS+ECS; secrets; DNS; CI/CD |
+| [`AUTH.md`](./AUTH.md) | OIDC for humans, service tokens for MCP, per-user tokens for attribution, threat model |
+| [`CONTRIBUTION.md`](./CONTRIBUTION.md) | Five contribution surfaces: Web UI, agent-assisted MCP writes, Slack/Teams bot, REST, scrapers |
+| [`INGESTION.md`](./INGESTION.md) | LLM-driven bootstrap; adapters for file-glob, dbt, Notion, Confluence, Slack, Salesforce |
+| [`GOVERNANCE.md`](./GOVERNANCE.md) | Audit log, approval workflow, versioning, RBAC, compliance posture |
+| [`OPERATIONS.md`](./OPERATIONS.md) | Backups, migrations, observability, staleness TTLs, cost monitoring, incident playbook |
+| [`.claude/skills/setup-lexicon.md`](./.claude/skills/setup-lexicon.md) | The orchestration skill that drives the agent's end-to-end install |
 
 ## Status
 
-v0 — scaffolded, stubs only. Not yet functional. See [`DESIGN.md`](./DESIGN.md) for the roadmap.
+Specification, pre-implementation. The docs are the deliverable. Commercialization and a reference implementation are deferred — this repo stays focused on the spec so any team can build their own on their stack.
 
 ## License
 
-Apache 2.0
+Apache 2.0 — see [`LICENSE`](./LICENSE).
